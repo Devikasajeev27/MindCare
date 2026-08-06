@@ -22,6 +22,7 @@ const CRISIS_KW = {
   critical: [
     'kill myself', 'end my life', 'want to die', 'suicide', 'suicidal', 'self harm', 'self-harm', 'hurt myself', 'cut myself', 'no reason to live', 'better off dead', 'end it all', "can't go on", 'goodbye forever',
     'marikkan thonnunnu', 'jeevikkan vayya', 'aathmahathya', 'മരിക്കാൻ തോന്നുന്നു', 'ജീവിക്കാൻ വയ്യ', 'ആത്മഹത്യ',
+    'njan marikkunnatha nallath', 'marikkunnatha nallath', 'marikkanatha nallath',
     'marikkan', 'jeevikkan pattilla', 'chavan thonnunnu', 'chavanam', 'chatha',
     'marichalo', 'chathalo', 'life venda', 'enikk e life venda', 'e life venda', 'ee life venda', 'marichu'
   ],
@@ -1790,9 +1791,11 @@ export default function AiAssistant() {
 
             <div className="p-3 border-t border-gray-100 dark:border-zinc-900 space-y-2">
 
-              <Button onClick={handleDirectTherapistChat} variant="outline" className="w-full rounded-xl border-primary/25 text-primary hover:bg-primary/5 text-[10px] h-8 font-extrabold flex items-center justify-center gap-1">
-                <HeartHandshake className="w-3.5 h-3.5" /> Direct Therapist Chat
-              </Button>
+              <Link href="/therapists">
+                <Button variant="outline" className="w-full rounded-xl border-primary/25 text-primary hover:bg-primary/5 text-[10px] h-8 font-extrabold flex items-center justify-center gap-1">
+                  <HeartHandshake className="w-3.5 h-3.5" /> Book Therapist Session
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -2918,13 +2921,14 @@ export default function AiAssistant() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block">{c.fee}</span>
-                      <Button
-                        size="sm"
-                        onClick={handleDirectTherapistChat}
-                        className="bg-primary hover:bg-primary/90 text-white text-[10px] h-7 px-3 rounded-xl font-bold mt-1"
-                      >
-                        Chat Live Direct
-                      </Button>
+                      <Link href="/therapists">
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-white text-[10px] h-7 px-3 rounded-xl font-bold mt-1"
+                        >
+                          Book &amp; Pay Session
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ))}

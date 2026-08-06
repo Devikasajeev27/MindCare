@@ -17,6 +17,7 @@ const CRISIS_KEYWORDS = [
   "enik ini jeevikenda", "enikk ini jeevikenda", "jeevikenda", "jeevikkandann", "jeevikkanda",
   "jeevikkan vayya", "jeevikkan vayyaa",
   "marikkanam", "marikkan thonnunnu", "marikkan thonunnu", "aathmahatya", "aathmahathya",
+  "njan marikkunnatha nallath", "marikkunnatha nallath", "marikkanatha nallath", "chavunnatha nallath",
   "marichalo", "chathalo", "chavanam", "chavan thonnunnu", "chatha", "marichu pokan",
   "life venda", "enikk e life venda", "ee life venda", "enik life venda",
   "suicide cheyyanam", "suicide thonnunnu", "aathma hatha",
