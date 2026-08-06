@@ -37,7 +37,20 @@ app.use(
 );
 app.use(
   cors({
-    origin: serverConfig.clientOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        origin.endsWith(".vercel.app") ||
+        origin.includes("vercel.app") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1") ||
+        serverConfig.clientOrigins.includes(origin) ||
+        process.env.CLIENT_ORIGINS === "*"
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     exposedHeaders: ["x-rtb-fingerprint-id", "request-id", "Content-Range", "X-Total-Count"],
   })
