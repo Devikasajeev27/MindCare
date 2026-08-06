@@ -426,8 +426,13 @@ export const api = {
     },
 
     async getSessionChats(sessionId: string) {
-      const res = await request<{ chats: any[] }>(`/chats/${sessionId}`);
-      return res.chats;
+      if (!sessionId) return [];
+      try {
+        const res = await request<{ chats: any[] }>(`/chats?sessionId=${encodeURIComponent(sessionId)}`);
+        return res.chats || [];
+      } catch {
+        return [];
+      }
     },
 
     async sendMessage(data: { text: string; recipient?: string; lang?: string; sessionId?: string; isVoice?: boolean; audioUrl?: string; voiceDuration?: string | number }) {

@@ -169,12 +169,7 @@ router.param("id", (req, res, next, val) => {
   next();
 });
 
-router.param("sessionId", (req, res, next, val) => {
-  if (val && !mongoose.Types.ObjectId.isValid(val)) {
-    return res.status(400).json({ message: "Invalid identification format for parameter: sessionId" });
-  }
-  next();
-});
+
 
 router.param("appointmentId", (req, res, next, val) => {
   if (val && !mongoose.Types.ObjectId.isValid(val)) {

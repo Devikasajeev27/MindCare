@@ -339,20 +339,21 @@ export default function AiAssistant() {
   }, [lang, makeSessionId]);
 
   const handleOpenChatSession = useCallback(async (sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setCrisisLevel('none');
+    setIsTherapistConnected(false);
+    setActiveTab('Chat');
+
     try {
       const history = await api.chat.getSessionChats(sessionId);
-      setActiveSessionId(sessionId);
-      setCrisisLevel('none');
-      setIsTherapistConnected(false);
       const uiMsgs = toUiMessages(history);
-      setMessages(uiMsgs);
+      setMessages(uiMsgs.length > 0 ? uiMsgs : [{ id: 'init', sender: 'ai', text: AI_GREETINGS[lang], time: 'Now' }]);
       const distressCount = uiMsgs.filter(m => m.sender === 'user' && (m.isDistress || m.riskLevel === 'critical' || m.riskLevel === 'high')).length;
       setSessionDistressCount(distressCount);
-      setActiveTab('Chat');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Unable to open chat', description: error.message || 'Please try again.' });
+    } catch {
+      setMessages([{ id: 'init', sender: 'ai', text: AI_GREETINGS[lang], time: 'Now' }]);
     }
-  }, [toUiMessages, toast]);
+  }, [toUiMessages, lang]);
 
   useEffect(() => {
     setIsTherapistConnected(false);
@@ -1985,54 +1986,6 @@ export default function AiAssistant() {
             {/* PANEL 1: LIVE CHAT */}
             {activeTab === 'Chat' && (
               <div className="flex-1 flex flex-col overflow-hidden p-5 h-full">
-                {/* Emergency Alert & Clinical Safety Monitor Banner */}
-                <AnimatePresence>
-                  {(sessionDistressCount > 0 || emergencyAlertInfo) && (
-                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="mb-4 bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/20 dark:border-amber-800/60 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
-                          <AlertTriangle className="w-5 h-5 animate-pulse" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs text-amber-900 dark:text-amber-200">Clinical Safety Monitor Active</h4>
-                          <p className="text-[11px] font-extrabold text-amber-700 dark:text-amber-300 mt-0.5">
-                            🚨 {sessionDistressCount} / 5 Distress Signals Tracked
-                            {sessionDistressCount >= 5 ? " — Emergency Contact SOS Alert Dispatched!" : " (Emergency contact alert triggers at 5)"}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-xl bg-white dark:bg-zinc-900 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-zinc-800 h-8 shrink-0 ml-2"
-                        onClick={() => {
-                          if (!emergencyAlertInfo) {
-                            const primaryContact = contacts && contacts.length > 0 ? contacts[0] : {
-                              name: "Rajesh Nair",
-                              relationship: "Brother",
-                              phone: "+91 98470 12345"
-                            };
-                            setEmergencyAlertInfo({
-                              id: `alert_${Date.now()}`,
-                              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                              recipientName: primaryContact.name,
-                              relation: primaryContact.relationship || "Brother",
-                              phone: primaryContact.phone || "+91 98470 12345",
-                              status: sessionDistressCount >= 5 ? "DISPATCHED & DELIVERED (SMS + PUSH)" : "MONITORING ACTIVE",
-                              trigger: `${sessionDistressCount} Distress disclosures detected in active session`,
-                              location: "Kochi, Kerala (GPS Coordinates 10.0159° N, 76.3419° E)",
-                              messageContent: `MindCare Safety Monitor: ${sessionDistressCount} distress disclosures tracked. Emergency contact: ${primaryContact.name}.`,
-                              therapistAssigned: "Dr. Devika Pillai (Senior Clinical Psychologist)"
-                            });
-                          }
-                          setShowAlertDetailsModal(true);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
                 <div className="flex-1 overflow-y-auto space-y-5 pr-1" ref={scrollRef}>
                   <AnimatePresence>

@@ -1,11 +1,14 @@
 import { io } from "socket.io-client";
 import { APP_CONFIG } from "@/config";
+import { FRONTEND_ENV } from "@/config/frontEnvConfig";
 
-// Connect using window.location.origin.
-// Vite proxy forwards /socket.io request to the backend in dev,
-// and in production it natively routes to the backend server.
-export const socket = io(window.location.origin, {
+const socketServerUrl = FRONTEND_ENV.apiBase
+  ? FRONTEND_ENV.apiBase.replace(/\/api\/?$/, "")
+  : "https://mindcare-backend-5yrz.onrender.com";
+
+export const socket = io(socketServerUrl, {
   autoConnect: false,
+  transports: ["websocket", "polling"],
   auth: () => ({
     token: localStorage.getItem(APP_CONFIG.frontend.tokenStorageKey) || "",
   }),
