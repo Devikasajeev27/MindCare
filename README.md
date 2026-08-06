@@ -27,3 +27,4 @@ Run verification with:
 npm run typecheck
 npm run build
 ```
+# MindCare
