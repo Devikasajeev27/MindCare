@@ -153,9 +153,9 @@ export default function TherapistChat() {
                   onClick={() => {
                       toast({
                         title: 'Therapist Session Closed',
-                        description: 'Returning to Dashboard.',
+                        description: 'Returning to AI Companion safe space.',
                       });
-                      setLocation('/dashboard');
+                      setLocation('/ai-assistant');
                     }}
                   variant="outline"
                   className="rounded-full shadow-sm text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20 text-xs font-extrabold"

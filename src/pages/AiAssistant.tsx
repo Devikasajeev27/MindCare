@@ -22,7 +22,9 @@ const CRISIS_KW = {
   critical: [
     'kill myself', 'end my life', 'want to die', 'suicide', 'suicidal', 'self harm', 'self-harm', 'hurt myself', 'cut myself', 'no reason to live', 'better off dead', 'end it all', "can't go on", 'goodbye forever',
     'marikkan thonnunnu', 'jeevikkan vayya', 'aathmahathya', 'മരിക്കാൻ തോന്നുന്നു', 'ജീവിക്കാൻ വയ്യ', 'ആത്മഹത്യ',
+    'njan marikkan ponu', 'marikkan ponu', 'marikkan povukayan', 'marikkan pokaya', 'marikkan pokuva', 'njan poan pova',
     'njan marikkunnatha nallath', 'marikkunnatha nallath', 'marikkanatha nallath',
+    'njan marichal nallatha', 'marichal nallatha', 'marichal nallath', 'njan marichal', 'marichal',
     'marikkan', 'jeevikkan pattilla', 'chavan thonnunnu', 'chavanam', 'chatha',
     'marichalo', 'chathalo', 'life venda', 'enikk e life venda', 'e life venda', 'ee life venda', 'marichu'
   ],
@@ -56,7 +58,19 @@ function maxRiskLevel(...levels: Array<string | null | undefined>): RiskLevel {
 function analyzeMessage(text: string): RiskLevel {
   if (!text) return 'none';
   const l = text.toLowerCase().replace(/[^\w\s\u0D00-\u0D7F]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (CRISIS_KW.critical.some(k => l.includes(k.toLowerCase()))) return 'critical';
+  
+  // Broad pattern matching for any Malayalam/Manglish death or suicidal intent stems
+  const suicidePattern = /(maric|marik|chav|aathmahat|suicid|self[- ]?harm|maranam)/i;
+  const lifeRefusalPattern = /(jeevik|life).*(venda|vaya|vayya|pattilla|pattulla|pilla|madut)/i;
+
+  if (
+    CRISIS_KW.critical.some(k => l.includes(k.toLowerCase())) ||
+    suicidePattern.test(l) ||
+    lifeRefusalPattern.test(l)
+  ) {
+    return 'critical';
+  }
+
   if (CRISIS_KW.high.some(k => l.includes(k.toLowerCase()))) return 'high';
   if (CRISIS_KW.moderate.some(k => l.includes(k.toLowerCase()))) return 'moderate';
   return 'none';
@@ -297,23 +311,30 @@ export default function AiAssistant() {
 
   const makeSessionId = useCallback(() => `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`, []);
 
-  const toUiMessages = useCallback((history: any[]): Message[] => history.map((m: any) => ({
-    id: m._id,
-    sender: m.sender === 'user' ? 'user' : 'ai',
-    text: m.text,
-    time: new Date(m.createdAt || m.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    riskLevel: normalizeRiskLevel(m.riskLevel),
-    isDistress: m.sender === 'user' && Boolean(m.distressFlagged),
-    isVoice: Boolean(m.isVoice),
-    voiceDuration: m.voiceDuration,
-    audioUrl: (typeof localStorage !== 'undefined' ? localStorage.getItem(`audio_${m._id}`) : null) || m.audioUrl || m.audioData,
-  })), []);
+  const toUiMessages = useCallback((history: any[]): Message[] => history.map((m: any) => {
+    const analyzedRisk = m.sender === 'user' ? analyzeMessage(m.text) : 'none';
+    const finalRisk = maxRiskLevel(normalizeRiskLevel(m.riskLevel), analyzedRisk);
+    const isDistress = m.sender === 'user' && (Boolean(m.distressFlagged) || finalRisk === 'critical' || finalRisk === 'high');
+    return {
+      id: m._id,
+      sender: m.sender === 'user' ? 'user' : 'ai',
+      text: m.text,
+      time: new Date(m.createdAt || m.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      riskLevel: finalRisk,
+      isDistress,
+      isVoice: Boolean(m.isVoice),
+      voiceDuration: m.voiceDuration,
+      audioUrl: (typeof localStorage !== 'undefined' ? localStorage.getItem(`audio_${m._id}`) : null) || m.audioUrl || m.audioData,
+    };
+  }), []);
 
   const handleNewChat = useCallback(() => {
     const sessionId = makeSessionId();
     setActiveSessionId(sessionId);
     setActiveTab('Chat');
     setCrisisLevel('none');
+    setIsTherapistConnected(false);
+    setSessionDistressCount(0);
     setMessages([{ id: 'init', sender: 'ai', text: AI_GREETINGS[lang], time: 'Now' }]);
   }, [lang, makeSessionId]);
 
@@ -322,7 +343,11 @@ export default function AiAssistant() {
       const history = await api.chat.getSessionChats(sessionId);
       setActiveSessionId(sessionId);
       setCrisisLevel('none');
-      setMessages(toUiMessages(history));
+      setIsTherapistConnected(false);
+      const uiMsgs = toUiMessages(history);
+      setMessages(uiMsgs);
+      const distressCount = uiMsgs.filter(m => m.sender === 'user' && (m.isDistress || m.riskLevel === 'critical' || m.riskLevel === 'high')).length;
+      setSessionDistressCount(distressCount);
       setActiveTab('Chat');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Unable to open chat', description: error.message || 'Please try again.' });
@@ -330,6 +355,7 @@ export default function AiAssistant() {
   }, [toUiMessages, toast]);
 
   useEffect(() => {
+    setIsTherapistConnected(false);
     fetchAllData();
   }, [fetchAllData]);
 
@@ -458,6 +484,54 @@ export default function AiAssistant() {
       const computedRisk = maxRiskLevel(risk, res.userMessage?.riskLevel);
       const currentMessageRisk = normalizeRiskLevel(res.currentMessageRiskLevel || (res.isCurrentMessageDistress ? computedRisk : 'none'));
       setCrisisLevel(currentMessageRisk);
+
+      const isCurrentDistress = currentMessageRisk === 'critical' || currentMessageRisk === 'high' || Boolean(res.isCurrentMessageDistress) || risk === 'critical' || risk === 'high';
+
+      // Dynamically calculate distress count from messages history array + current message
+      const previousDistressCount = messages.filter(m => m.sender === 'user' && (m.isDistress || m.riskLevel === 'critical' || m.riskLevel === 'high')).length;
+      const totalDistressCount = previousDistressCount + (isCurrentDistress ? 1 : 0);
+      const backendDistressCount = res.distressWindow?.count || 0;
+      const effectiveDistressCount = Math.max(totalDistressCount, backendDistressCount);
+
+      setSessionDistressCount(effectiveDistressCount);
+      setShowModal(false);
+
+      // Instant automatic redirect to live therapist chat on 2nd distress message
+      if (effectiveDistressCount >= 2 && !isTherapistConnected) {
+        setIsTherapistConnected(true);
+        setShowModal(false);
+        setShowEscalateModal(false);
+
+        if (effectiveDistressCount >= 5) {
+          const primaryContact = contacts && contacts.length > 0 ? contacts[0] : {
+            name: "Emergency Contact",
+            relationship: "Family/Friend",
+            phone: "+91 98470 12345"
+          };
+          try {
+            api.notifications.add(
+              "🚨 Emergency Crisis Alert Dispatched",
+              `5 distress disclosures detected. Emergency alert dispatched to ${primaryContact.name} (${primaryContact.phone}).`,
+              "alert"
+            ).catch(() => {});
+          } catch (e) {}
+
+          toast({
+            variant: "destructive",
+            title: "🚨 5 Distress Signals Detected — Emergency Contact Notified",
+            description: `Emergency alert sent to ${primaryContact.name} (${primaryContact.phone}).`
+          });
+        } else {
+          toast({
+            title: "🚨 2 Distress Messages Flagged — Live Therapist Connected",
+            description: "Connecting directly to Senior Clinical Psychologist..."
+          });
+        }
+
+        setLocation("/therapist/chat");
+        return;
+      }
+
       setMessages(prev => prev.map(message => message.id === tempId ? {
         ...message,
         id: res.userMessage?._id || message.id,
@@ -617,7 +691,7 @@ export default function AiAssistant() {
         description: err.message || "Failed to reach AI companion."
       });
     }
-  }, [activeSessionId, inputValue, isVoiceSessionActive, makeSessionId, recordingSeconds, toast, profile]);
+  }, [activeSessionId, inputValue, isVoiceSessionActive, makeSessionId, recordingSeconds, toast, profile, messages, sessionDistressCount, isTherapistConnected]);
 
   // ─── Voice Recording Helpers ──────────────────────────────────────────────────
   const startRecording = async () => {

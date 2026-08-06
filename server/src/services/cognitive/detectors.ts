@@ -17,6 +17,7 @@ const CRISIS_KEYWORDS = [
   "enik ini jeevikenda", "enikk ini jeevikenda", "jeevikenda", "jeevikkandann", "jeevikkanda",
   "jeevikkan vayya", "jeevikkan vayyaa",
   "marikkanam", "marikkan thonnunnu", "marikkan thonunnu", "aathmahatya", "aathmahathya",
+  "njan marikkan ponu", "marikkan ponu", "marikkan povukayan", "marikkan pokaya", "njan poan pova",
   "njan marikkunnatha nallath", "marikkunnatha nallath", "marikkanatha nallath", "chavunnatha nallath",
   "marichalo", "chathalo", "chavanam", "chavan thonnunnu", "chatha", "marichu pokan",
   "life venda", "enikk e life venda", "ee life venda", "enik life venda",
@@ -95,7 +96,17 @@ function manglishMatches(lower: string): string[] {
 
 export function findCrisisTriggers(text: string): string[] {
   const lower = normalise(text);
-  return CRISIS_KEYWORDS.filter((keyword) => lower.includes(keyword));
+  const keywordMatches = CRISIS_KEYWORDS.filter((keyword) => lower.includes(keyword));
+  
+  // Dynamic regex matching for Malayalam/Manglish suicidal intent & death variants
+  const suicideRegex = /\b(maric?h|chav|aathmahat|maranam|suicid|self[- ]?harm)\b/i;
+  const lifeRefusalRegex = /\b(jeevik|life)\s*(?:venda|vaya|vayya|pattilla|pattulla|pilla|maddut|madut|vendaa)\b/i;
+
+  if (keywordMatches.length === 0) {
+    if (suicideRegex.test(lower)) keywordMatches.push("malayalam_death_intent");
+    if (lifeRefusalRegex.test(lower)) keywordMatches.push("malayalam_life_refusal");
+  }
+  return keywordMatches;
 }
 
 /** Used by the controller before persistence and by the cognitive pipeline. */
