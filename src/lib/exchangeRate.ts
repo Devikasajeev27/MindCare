@@ -1,4 +1,5 @@
-const EXCHANGE_API_URL = "/api/exchange-rates";
+import { FRONTEND_ENV } from "@/config";
+const EXCHANGE_API_URL = `${FRONTEND_ENV.apiBase}/exchange-rates`;
 const CACHE_KEY = "mindcare_exchange_rates";
 const CACHE_EXPIRY = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 
