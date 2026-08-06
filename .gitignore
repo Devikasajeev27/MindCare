@@ -39,3 +39,9 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Database & Virtualenv
+data/
+python-nlp/venv/
+python-nlp/__pycache__/
+
