@@ -1,0 +1,27 @@
+{
+  "short_name": "MindCare",
+  "name": "MindCare — AI Mental Wellness Platform",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#2a7d46",
+  "theme_color": "#2a7d46",
+  "display": "standalone",
+  "serviceworker": {
+    "src": "/sw.js",
+    "scope": "/",
+    "type": "classic"
+  }
+}
