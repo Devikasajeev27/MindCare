@@ -122,8 +122,8 @@ if USE_FASTAPI and FastAPI:
         return analysis.semantic_preprocess(body.query, body.documents)
 
     def main():
-        port = int(os.environ.get("NLP_PORT", "8001"))
-        host = os.environ.get("NLP_HOST", "127.0.0.1")
+        port = int(os.environ.get("PORT", os.environ.get("NLP_PORT", "8001")))
+        host = os.environ.get("NLP_HOST", "0.0.0.0")
         uvicorn.run(app, host=host, port=port, log_level="warning")
 
 else:
@@ -198,8 +198,8 @@ else:
                 self._send_json({"error": "Not Found"}, 404)
 
     def main():
-        port = int(os.environ.get("NLP_PORT", "8001"))
-        host = os.environ.get("NLP_HOST", "127.0.0.1")
+        port = int(os.environ.get("PORT", os.environ.get("NLP_PORT", "8001")))
+        host = os.environ.get("NLP_HOST", "0.0.0.0")
         server = HTTPServer((host, port), NLPHandler)
         server.serve_forever()
 
