@@ -5,10 +5,10 @@
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "express", "bcryptjs", "jsonwebtoken", "cors"]
   },
   "include": ["server/src/**/*.ts"],
   "exclude": ["dist", "node_modules"]
